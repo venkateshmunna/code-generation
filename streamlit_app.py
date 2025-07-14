@@ -1,30 +1,41 @@
 import streamlit as st
-import openai
+import requests
 
-# Set your OpenRouter API key here
-openai.api_key = "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"
-openai.api_base = "https://openrouter.ai/api/v1"
+# Set Hugging Face Inference API endpoint and key
+API_URL = "https://api-inference.huggingface.co/models/bigcode/starcoder"
+headers = {
+    "Authorization": f"Bearer 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"
+}
 
-st.title("Prompt to Code Generator")
+def query(prompt):
+    payload = {"inputs": prompt}
+    try:
+        response = requests.post(API_URL, headers=headers, json=payload, timeout=60)
+        response.raise_for_status()
+        result = response.json()
+        if isinstance(result, list) and "generated_text" in result[0]:
+            return result[0]["generated_text"]
+        elif isinstance(result, dict) and "error" in result:
+            return f"Error from model: {result['error']}"
+        else:
+            return "Unknown response format."
+    except Exception as e:
+        return f"Request failed: {str(e)}"
 
-prompt = st.text_area("Enter your prompt to generate code", height=150)
+# Streamlit UI
+st.set_page_config(page_title="Prompt-to-Code Generator", layout="centered")
+st.title("💻 Prompt to Code Generator (Hugging Face API)")
+
+prompt = st.text_area("Enter your prompt to generate code:", height=150)
 
 if st.button("Generate Code"):
-    if prompt.strip() == "":
-        st.warning("Please enter a prompt.")
+    if not prompt.strip():
+        st.warning("Please enter a prompt first.")
     else:
         with st.spinner("Generating code..."):
-            try:
-                response = openai.ChatCompletion.create(
-                    model="openchat/openchat-3.5",  # You can change to other models too
-                    messages=[
-                        {"role": "user", "content": f"Write code for: {prompt}"}
-                    ],
-                    temperature=0.3
-                )
-                code = response['choices'][0]['message']['content']
-                st.code(code, language="python")
-                st.download_button("Download Code", code, file_name="generated_code.py")
-                st.success("Code generated successfully!")
-            except Exception as e:
-                st.error(f"Error: {e}")
+            output = query(prompt)
+            if output.startswith("Error") or output.startswith("Request failed"):
+                st.error(output)
+            else:
+                st.code(output, language="python")
+                st.download_button("Download Code", output, file_name="generated_code.py")
