@@ -2,9 +2,10 @@ import streamlit as st
 import requests
 
 # Set Hugging Face Inference API endpoint and key
-API_URL = "https://api-inference.huggingface.co/models/bigcode/starcoder"
+API_URL = "https://api-inference.huggingface.co/models/Salesforce/codegen-350M-mono"
+
 headers = {
-    "Authorization": f"Bearer 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"
+    "Authorization": f"Bearer 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"
 }
 
 def query(prompt):
