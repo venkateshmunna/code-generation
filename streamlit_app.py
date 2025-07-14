@@ -1,27 +1,30 @@
-
 import streamlit as st
-import requests
+import openai
 
-st.title("Free Prompt-to-Code Generator 🔓")
+# Set your OpenRouter API key here
+openai.api_key = "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"
+openai.api_base = "https://openrouter.ai/api/v1"
+
+st.title("Prompt to Code Generator")
 
 prompt = st.text_area("Enter your prompt to generate code", height=150)
-
-API_URL = "https://api-inference.huggingface.co/models/Salesforce/codegen-350M-mono"
-headers = {"Authorization": ""}  # No token for public inference
-
-def query(payload):
-    response = requests.post(API_URL, headers=headers, json=payload)
-    return response.json()
 
 if st.button("Generate Code"):
     if prompt.strip() == "":
         st.warning("Please enter a prompt.")
     else:
-        with st.spinner("Generating..."):
-            result = query({"inputs": prompt})
+        with st.spinner("Generating code..."):
             try:
-                code = result[0]['generated_text']
+                response = openai.ChatCompletion.create(
+                    model="openchat/openchat-3.5",  # You can change to other models too
+                    messages=[
+                        {"role": "user", "content": f"Write code for: {prompt}"}
+                    ],
+                    temperature=0.3
+                )
+                code = response['choices'][0]['message']['content']
                 st.code(code, language="python")
                 st.download_button("Download Code", code, file_name="generated_code.py")
+                st.success("Code generated successfully!")
             except Exception as e:
-                st.error("Error: Could not generate code. Please try again.")
+                st.error(f"Error: {e}")
